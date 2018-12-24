@@ -14,11 +14,12 @@ object Main extends IOApp {
     val tracing = new ReaderTPropagation(new OpenTracingTracing[IO](tracer))
     import tracing.Effect
     import tracing.readerTPropagationInstance
-    val algebra = new FooAlgebra(new BarAlgebra(new BazAlgebra[Effect]))
+
+    val algebra = new FooAlgebra(new BarAlgebra(new BazAlgebra[Effect]), new InstrumentedHttpClient[Effect])
     val app = algebra.foo().flatMap(Console[Effect].println)
 
     for { // Root span creation is typically job of an http framework middleware. We still need to implement inject and extract headers first
-      root <- tracing.tracer.startRootSpan("main")
+      root <- tracing.tracer.startRootSpan("main", Map.empty)
       _ <- app.run(root).guarantee(for {
         _ <- tracing.tracer.finish(root)
         _ <- IO(tracer.close())
