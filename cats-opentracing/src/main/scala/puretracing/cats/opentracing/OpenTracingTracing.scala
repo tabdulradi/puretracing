@@ -1,6 +1,12 @@
 package puretracing.cats.opentracing
 
+
+import io.opentracing.propagation.{Format, TextMapExtractAdapter, TextMapInjectAdapter}
+
+import scala.collection.JavaConverters._
+import cats.syntax.all._
 import cats.effect.Sync
+
 import puretracing.api.{Tracer, TracingValue}
 
 /**
@@ -9,8 +15,23 @@ import puretracing.api.{Tracer, TracingValue}
 class OpenTracingTracing[F[_]](tracer: io.opentracing.Tracer)(implicit F: Sync[F]) extends Tracer[F] {
   override type Span = io.opentracing.Span
 
-  override def startRootSpan(operationName: String): F[Span] =
-    F.delay(tracer.buildSpan(operationName).start())
+  override def startRootSpan(operationName: String, upstreamSpan: Headers): F[Span] = { 
+    import io.opentracing.propagation._
+    import scala.collection.JavaConverters._
+    import cats.syntax.all._
+    for {
+      upstream <- F.catchNonFatal(tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(upstreamSpan.asJava)))
+    } yield tracer.buildSpan(operationName).asChildOf(upstream).start()
+  }
+
+  override def export(span: Span): F[Headers] = { 
+    
+    val carrier = new java.util.HashMap[String, String]() // Warning, mutability ahead!
+    
+    for {
+      _ <- F.catchNonFatal(tracer.inject(span.context, Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(carrier)))
+    } yield carrier.asScala.toMap // convert back to immutability land
+  }
 
   override def startChild(span: Span, operationName: String): F[Span] =
     F.delay(tracer.buildSpan(operationName).asChildOf(span).start())

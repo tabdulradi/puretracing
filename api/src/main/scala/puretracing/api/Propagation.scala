@@ -6,8 +6,10 @@ package puretracing.api
   */
 trait Tracer[F[_]] {
   type Span
+  type Headers = Map[String, String] // TODO: Make this param, perefebly on the methods not the whole trait
 
-  def startRootSpan(operationName: String): F[Span]
+  def startRootSpan(operationName: String, upstreamSpan: Headers): F[Span]
+  def export(span: Span): F[Headers]
   def startChild(span: Span, operationName: String): F[Span]
   def finish(span: Span): F[Unit]
   def setTag(span: Span, key: String, value: TracingValue): F[Unit]

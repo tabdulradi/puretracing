@@ -29,7 +29,7 @@ sbt run exampleOpenTracing/run
 once the program finished, navigate to [localhost:16686](localhost:16686/), then from the first drop down menu select "pure-application", then click find traces.
  
 ## Todo
-- [ ] Add `inject` & `extract` methods to Tracer
+- [x] Add `inject` & `extract` methods to Tracer
 - [ ] Integrate with http-client library to propagation outgoing http calls
 - [ ] Integrate with http4s to propagate from incoming http calls
 - [ ] AWS XRay implementation
