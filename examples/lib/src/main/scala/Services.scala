@@ -6,6 +6,7 @@ import cats.instances.list._
 import puretracing.api.Propagation
 import puretracing.cats.dsl._
 
+
 /**
   * Tracing Aware Algebra
   */
@@ -63,8 +64,8 @@ object Console {
 class InstrumentedHttpClient[F[_]: FlatMap](implicit console: Console[F], tracer: Propagation[F]) {
   import cats.syntax.all._
 
-  def request(method: String, url: String): F[Unit] = 
-    for { 
+  def request(method: String, url: String): F[Unit] =
+    for {
       span <- tracer.currentSpan
       headers <- tracer.export(span)
       // Simulate http request
