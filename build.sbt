@@ -9,6 +9,7 @@ lazy val cats = project.dependsOn(api).settings(libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "1.0.0"
 ))
 lazy val `cats-opentracing` = project.dependsOn(cats).settings(libraryDependencies += "io.opentracing" % "opentracing-api" % "0.31.0")
+lazy val sttp = project.dependsOn(api).settings(libraryDependencies += "com.softwaremill.sttp" %% "core" % "1.5.2")
 
 // TODO: Example that sends HTTP requests
 lazy val exampleLib = project.in(file("examples/lib")).dependsOn(cats).settings(libraryDependencies += "org.typelevel" %% "cats-effect" % "1.0.0")

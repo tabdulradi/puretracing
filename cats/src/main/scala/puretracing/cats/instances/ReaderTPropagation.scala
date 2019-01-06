@@ -2,7 +2,7 @@ package puretracing.cats.instances
 
 import cats.Applicative
 import cats.data.ReaderT
-import cats.effect.{Bracket, Sync}
+import cats.effect.Sync
 import cats.effect.syntax.bracket._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
