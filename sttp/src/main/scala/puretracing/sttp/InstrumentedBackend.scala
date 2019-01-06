@@ -4,6 +4,10 @@ import com.softwaremill.sttp.{MonadError, Request, Response, SttpBackend, monadS
 import monadSyntax._
 import puretracing.api.Propagation
 
+/**
+  * Creates child span to represent the http request
+  * Also adds trace id to the outgoing request headers
+  */
 object InstrumentedBackend {
   def apply[R[_], S](inner: SttpBackend[R, S])(implicit tracing: Propagation[R]): SttpBackend[R, S] =
     instance(inner, tracing)(
