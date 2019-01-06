@@ -2,10 +2,22 @@ package puretracing.cats.instances
 
 import cats.Applicative
 import cats.data.ReaderT
+import cats.effect.{Bracket, Sync}
+import cats.effect.syntax.bracket._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import puretracing.api.{Propagation, Tracer, TracingValue}
 
 class ReaderTPropagation[F[_]: Applicative](val tracer: Tracer[F]) {
   type Effect[A] = ReaderT[F, tracer.Span, A]
+  val Effect = ReaderT
+
+  def runWithRootSpan[A, E](operationName: String, upstreamSpan: tracer.Headers)
+                           (thunk: Effect[A])(implicit F: Sync[F]): F[A] =
+    for {
+      span <- tracer.startRootSpan(operationName, upstreamSpan)
+      a <- thunk.run(span).guarantee(tracer.finish(span))
+    } yield a
 
   implicit val readerTPropagationInstance: Propagation[Effect] =
     new Propagation[Effect] {
