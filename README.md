@@ -30,7 +30,7 @@ once the program finished, navigate to [localhost:16686](localhost:16686/), then
  
 ## Todo
 - [x] Add `inject` & `extract` methods to Tracer
-- [ ] Integrate with http-client library to propagation outgoing http calls
+- [x] Integrate with http-client library to propagation outgoing http calls
 - [ ] Integrate with http4s to propagate from incoming http calls
 - [ ] AWS XRay implementation
 
