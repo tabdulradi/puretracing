@@ -1,0 +1,9 @@
+language: scala
+
+jdk: oraclejdk8
+
+scala:
+   - 2.12.8
+
+script:
+  - sbt clean test

@@ -4,7 +4,7 @@ This repo contains the proposed interfaces, cats implementation, and few example
 
 ## Run the examples
 ```bash
-sbt run examplePrintlnTracing/run
+sbt examplePrintlnTracing/run
 ```
 This runs application with dummy println-based backed, just to see how the context get's propagated.
 
@@ -23,7 +23,7 @@ docker run -d --name jaeger \
 ```  
 then
 ```bash
-sbt run exampleOpenTracing/run
+sbt exampleOpenTracing/run
 ```
 
 once the program finished, navigate to [localhost:16686](localhost:16686/), then from the first drop down menu select "pure-application", then click find traces.
