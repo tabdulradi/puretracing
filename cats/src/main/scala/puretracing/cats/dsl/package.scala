@@ -1,15 +1,13 @@
 package puretracing.cats
 
 import cats.{Applicative, Monad}
-import cats.effect.{Bracket, IO}
-import cats.effect.syntax.all._
+import cats.effect.{Bracket, Resource}
 import cats.syntax.all._
 import cats.instances.list._
-
 import puretracing.api.{Propagation, Tracer, TracingValue}
 
 package object dsl {
-  def inChildSpan[F[_]]: ChildSpanPartiallyApplied[F] = new ChildSpanPartiallyApplied[F]
+  def childSpan[F[_]]: ChildSpanPartiallyApplied[F] = new ChildSpanPartiallyApplied[F]
 
   implicit def tracingValueFromString(value: String): TracingValue = TracingValue.StringTracingValue(value)
   implicit def tracingValueFromBoolean(value: Boolean): TracingValue = TracingValue.BooleanTracingValue(value)
@@ -20,17 +18,20 @@ package object dsl {
 
 
 class ChildSpanPartiallyApplied[F[_]] {
-  def apply[A](operationName: String, tags: (String, TracingValue)*)(logic: SpanOps[F] => F[A])(
+  def apply(operationName: String, tags: (String, TracingValue)*)(
     implicit
     tracing: Propagation[F],
     M: Monad[F],
     E: Bracket[F, Throwable]
-  ): F[A] = for {
-    parent <- tracing.currentSpan()
-    span <- tracing.startChild(parent, operationName)
-    richSpan = spanOps(tracing)(span)
-    fa <- tracing.useSpanIn(span)(richSpan.tag(tags: _*) *> logic(richSpan)).guarantee(tracing.finish(span))
-  } yield fa
+  ): Resource[F, SpanOps[F]] = Resource[F, SpanOps[F]] {
+    for {
+      parent <- tracing.currentSpan()
+      span <- tracing.startChild(parent, operationName)
+      richSpan = spanOps(tracing)(span)
+// ReaderT.local doesn't play nice with Resource. We need to set `richSpan`
+//      _ <- tracing.useSpanIn[A](span)(richSpan.tag(tags: _*) *> ???)
+    } yield richSpan -> tracing.finish(span)
+  }
 
   private def spanOps(tracer: Tracer[F])(span: tracer.Span)(implicit F: Applicative[F]) = new SpanOps[F] {
     def tag(tags: (String, TracingValue)*): F[Unit] =

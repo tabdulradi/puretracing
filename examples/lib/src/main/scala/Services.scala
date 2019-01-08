@@ -13,11 +13,11 @@ import puretracing.cats.dsl._
 class FooAlgebra[F[_]: Propagation](algebra: BarAlgebra[F], http: InstrumentedHttpClient[F]) {
 
   def foo()(implicit F: Bracket[F, Throwable]): F[Int] =
-    inChildSpan[F]("foo", "user_id" -> 3) { span =>
+    childSpan[F]("foo", "user_id" -> 3).use { span =>
       span.log("event" -> "foo happened") *>
         http.request("GET", "127.0.0.1") *>
         http.request("GET", "127.0.0.2") *>
-        inChildSpan[F]("inner") { _ => http.request("POST", "127.0.0.3/lol") } *>
+        childSpan[F]("inner").use { _ => http.request("POST", "127.0.0.3/lol") } *>
         (1 to 21).toList.traverse(_ => algebra.bar()).map(_.sum)
     }
 }
@@ -37,7 +37,7 @@ class BarAlgebra[F[_]: Functor](algebra: BazAlgebra[F]) {
 class BazAlgebra[F[_]: Applicative: Propagation] {
 
   def baz()(implicit F: Bracket[F, Throwable]): F[Int] =
-    inChildSpan[F]("baz") { span =>
+    childSpan[F]("baz").use { span =>
       for {
         _ <- span.log("baz" -> 1)
         res <- 1.pure[F]
