@@ -1,7 +1,9 @@
 import cats.effect.{ExitCode, IO, IOApp}
-import puretracing.cats.instances.ReaderTPropagation
+import puretracing.cats.instances.StateTPropagation
 import puretracing.cats.opentracing.OpenTracingTracing
-import io.jaegertracing.Configuration, Configuration.SamplerConfiguration, Configuration.ReporterConfiguration
+import io.jaegertracing.Configuration
+import Configuration.SamplerConfiguration
+import Configuration.ReporterConfiguration
 
 object Main extends IOApp {
   def run(args: List[String]): IO[ExitCode] = {
@@ -11,9 +13,8 @@ object Main extends IOApp {
         .withReporter(ReporterConfiguration.fromEnv().withLogSpans(true))
         .getTracer
 
-    val tracing = new ReaderTPropagation(new OpenTracingTracing[IO](tracer))
-    import tracing.Effect
-    import tracing.readerTPropagationInstance
+    val tracing = new StateTPropagation(new OpenTracingTracing[IO](tracer))
+    import tracing._
 
     val algebra = new FooAlgebra(new BarAlgebra(new BazAlgebra[Effect]), new InstrumentedHttpClient[Effect])
     val app = algebra.foo().flatMap(Console[Effect].println)

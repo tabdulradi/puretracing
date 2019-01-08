@@ -1,11 +1,9 @@
 package puretracing.cats
 
 import cats.{Applicative, Monad}
-import cats.effect.{Bracket, IO}
-import cats.effect.syntax.all._
+import cats.effect.{Bracket, Resource}
 import cats.syntax.all._
 import cats.instances.list._
-
 import puretracing.api.{Propagation, Tracer, TracingValue}
 
 package object dsl {
@@ -20,17 +18,21 @@ package object dsl {
 
 
 class ChildSpanPartiallyApplied[F[_]] {
-  def apply[A](operationName: String, tags: (String, TracingValue)*)(logic: SpanOps[F] => F[A])(
+  def apply(operationName: String, tags: (String, TracingValue)*)(
     implicit
     tracing: Propagation[F],
     M: Monad[F],
     E: Bracket[F, Throwable]
-  ): F[A] = for {
-    parent <- tracing.currentSpan()
-    span <- tracing.startChild(parent, operationName)
-    richSpan = spanOps(tracing)(span)
-    fa <- tracing.useSpanIn(span)(richSpan.tag(tags: _*) *> logic(richSpan)).guarantee(tracing.finish(span))
-  } yield fa
+  ): Resource[F, SpanOps[F]] = Resource[F, SpanOps[F]] {
+    for {
+      parent <- tracing.getSpan()
+      span <- tracing.startChild(parent, operationName)
+      _ <- tracing.setSpan(span) // This means Propagation has to be interpreted as StateT rather than ReaderT
+      richSpan = spanOps(tracing)(span)
+      _ <- richSpan.tag(tags: _*)
+      release = tracing.finish(span) *> tracing.setSpan(parent)
+    } yield richSpan -> release
+  }
 
   private def spanOps(tracer: Tracer[F])(span: tracer.Span)(implicit F: Applicative[F]) = new SpanOps[F] {
     def tag(tags: (String, TracingValue)*): F[Unit] =

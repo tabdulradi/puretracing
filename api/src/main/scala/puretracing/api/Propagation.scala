@@ -22,9 +22,9 @@ trait Tracer[F[_]] {
   * Deals with context propagation.
   * Low level, users should use cat's dsl
   */
-trait Propagation[F[_]] extends Tracer[F] { // F could be ReaderT[IO]
-  def currentSpan(): F[Span]
-  def useSpanIn[A](span: Span)(fa: F[A]): F[A]
+trait Propagation[F[_]] extends Tracer[F] { // F could be StateT[IO]
+  def getSpan(): F[Span]
+  def setSpan(span: Span): F[Unit]
 }
 
 sealed trait TracingValue // Poor man's union types

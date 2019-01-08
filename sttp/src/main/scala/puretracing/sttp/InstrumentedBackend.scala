@@ -27,7 +27,7 @@ object InstrumentedBackend {
 
       override def send[T](request: Request[T, S]): R[Response[T]] =
         for {
-          parent <- tracing.currentSpan()
+          parent <- tracing.getSpan()
           span <- tracing.startChild(parent, operationName(request))
           _ <- instrumentation(request, span)
           response <- sendAndCloseSpan(request, span)

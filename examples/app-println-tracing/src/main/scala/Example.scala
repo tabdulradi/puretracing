@@ -1,10 +1,11 @@
-import puretracing.cats.instances.ReaderTPropagation
+
+import puretracing.cats.instances.StateTPropagation
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val tracing = new ReaderTPropagation(new PrintLnTracing)
-    import tracing.Effect
-    import tracing.readerTPropagationInstance
+    val tracing = new StateTPropagation(new PrintLnTracing)
+    import tracing._
+
     val algebra = new FooAlgebra(new BarAlgebra(new BazAlgebra[Effect]), new InstrumentedHttpClient[Effect])
     val app = algebra.foo().flatMap(Console[Effect].println)
     tracing.tracer.startRootSpan("main", Map.empty).flatMap(app.run).unsafeRunSync()

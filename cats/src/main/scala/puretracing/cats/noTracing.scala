@@ -18,8 +18,8 @@ class NoopPropagation[F[_]](implicit F: Applicative[F]) extends Propagation[F] {
   private val dummy = F.pure(())
   private val dummyHeaders = F.pure(Map.empty[String, String])
 
-  override def currentSpan(): F[Unit] = dummy
-  override def useSpanIn[A](span: Unit)(fa: F[A]): F[A] = fa
+  override def getSpan(): F[Unit] = dummy
+  override def setSpan(span: Unit): F[Unit] = dummy
   override def startRootSpan(operationName: String, upstreamSpan: Headers): F[Unit] = dummy
   override def export(span: Unit): F[Headers] = dummyHeaders
   override def startChild(span: Unit, operationName: String): F[Unit] = dummy

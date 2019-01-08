@@ -1,7 +1,7 @@
 import cats.effect.{ExitCode, IO, IOApp}
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
-import puretracing.cats.instances.ReaderTPropagation
+import puretracing.cats.instances.StateTPropagation
 import puretracing.cats.opentracing.OpenTracingTracing
 import io.jaegertracing.Configuration, Configuration.SamplerConfiguration, Configuration.ReporterConfiguration
 import puretracing.sttp.InstrumentedBackend
@@ -15,8 +15,8 @@ object Main extends IOApp {
         .withReporter(ReporterConfiguration.fromEnv().withLogSpans(true))
         .getTracer
 
-    val tracing = new ReaderTPropagation(new OpenTracingTracing[IO](tracer))
-    import tracing.readerTPropagationInstance
+    val tracing = new StateTPropagation(new OpenTracingTracing[IO](tracer))
+    import tracing.propagationInstance
     implicit val backend = InstrumentedBackend[tracing.Effect, Nothing](AsyncHttpClientCatsBackend())
 
     tracing.runWithRootSpan("main", Map.empty) {  // typically called by an http framework middleware
